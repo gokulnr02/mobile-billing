@@ -1,0 +1,66 @@
+{
+    "initialState": {
+        "BillId": 0,
+        "BillNo": "",
+        "BillDate": "",
+        "CustomerName": "",
+        "CustomerContact": "",
+        "CustomerAddress": "",
+        "BillDescription": "",
+        "BillAmount": 0,
+        "Attachments": "",
+        "PaymentStatus": []
+    },
+    "fields": {
+        "BillIDPK": {
+            "type": "number",
+            "label": "Bill IDPK",
+            "required": false
+        },
+        "BillNo": {
+            "type": "text",
+            "label": "Bill Number",
+            "required": true
+        },
+        "BillDate": {
+            "type": "date",
+            "label": "Bill Date",
+            "required": true
+        },
+        "CustomerName": {
+            "type": "text",
+            "label": "Customer Name",
+            "required": true
+        },
+        "CustomerContact": {
+            "type": "text",
+            "label": "Customer Contact"
+        },
+        "CustomerAddress": {
+            "type": "text",
+            "label": "Customer Address"
+        },
+        "BillDescription": {
+            "type": "textarea",
+            "label": "Bill Description"
+        },
+        "BillAmount": {
+            "type": "number",
+            "label": "Bill Amount",
+            "required": true
+        },
+        "Attachments": {
+            "type": "file",
+            "label": "Attachments"
+        },
+        "PaymentStatus": {
+            "type": "dropdown",
+            "label": "Payment Status",
+            "options": [
+                "Paid",
+                "Pending"
+            ],
+            "required": true
+        }
+    }
+}

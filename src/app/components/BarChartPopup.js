@@ -6,7 +6,6 @@ import {
     XAxis,
     YAxis,
     Tooltip,
-    ResponsiveContainer,
     Legend,
 } from "recharts";
 import DatePicker from "react-datepicker";
@@ -19,6 +18,12 @@ const dummyData = [
     { name: "Apr", received: 7000, pending: 3000 },
     { name: "May", received: 8600, pending: 1400 },
     { name: "Jun", received: 9200, pending: 800 },
+    { name: "Jul", received: 8100, pending: 1900 },
+    { name: "Aug", received: 8700, pending: 1300 },
+    { name: "Sep", received: 7300, pending: 2700 },
+    { name: "Oct", received: 9400, pending: 600 },
+    { name: "Nov", received: 8900, pending: 1100 },
+    { name: "Dec", received: 9700, pending: 300 },
 ];
 
 export default function BarChartPopup() {
@@ -26,7 +31,6 @@ export default function BarChartPopup() {
     const [showCustomRange, setShowCustomRange] = useState(false);
     const [customStart, setCustomStart] = useState(null);
     const [customEnd, setCustomEnd] = useState(null);
-
     const [selectedMonth, setSelectedMonth] = useState("");
     const [selectedYear, setSelectedYear] = useState("");
 
@@ -52,91 +56,20 @@ export default function BarChartPopup() {
     };
 
     return (
-        <div className="bg-white rounded-xl shadow-md px-4 py-4">
-            <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold"> Overview</h2>
-                <select
-                    className="text-sm border rounded px-2 py-1"
-                    value={filter}
-                    onChange={(e) => handleFilterChange(e.target.value)}
-                >
-                    {filterOptions.map((opt) => (
-                        <option key={opt} value={opt}>
-                            {opt}
-                        </option>
-                    ))}
-                </select>
-            </div>
-
-            {/* Month/Year dropdown */}
-            {filter === "Select Year & Month" && (
-                <div className="flex gap-2 mb-4">
-                    <select
-                        className="border rounded px-2 py-1"
-                        value={selectedMonth}
-                        onChange={(e) => setSelectedMonth(e.target.value)}
-                    >
-                        <option value="">Select Month</option>
-                        {months.map((m) => (
-                            <option key={m} value={m}>{m}</option>
-                        ))}
-                    </select>
-                    <select
-                        className="border rounded px-2 py-1"
-                        value={selectedYear}
-                        onChange={(e) => setSelectedYear(e.target.value)}
-                    >
-                        <option value="">Select Year</option>
-                        {years.map((y) => (
-                            <option key={y} value={y}>{y}</option>
-                        ))}
-                    </select>
-                </div>
-            )}
-
-            {/* Date Picker Popup for Custom Range */}
-            {showCustomRange && (
-                <div className="flex gap-4 items-center mb-4">
-                    <div>
-                        <p className="text-sm mb-1">From:</p>
-                        <DatePicker
-                            selected={customStart}
-                            onChange={(date) => setCustomStart(date)}
-                            selectsStart
-                            startDate={customStart}
-                            endDate={customEnd}
-                            className="border px-2 py-1 rounded"
-                            placeholderText="Start Date"
-                        />
-                    </div>
-                    <div>
-                        <p className="text-sm mb-1">To:</p>
-                        <DatePicker
-                            selected={customEnd}
-                            onChange={(date) => setCustomEnd(date)}
-                            selectsEnd
-                            startDate={customStart}
-                            endDate={customEnd}
-                            minDate={customStart}
-                            className="border px-2 py-1 rounded"
-                            placeholderText="End Date"
-                        />
-                    </div>
-                </div>
-            )}
-
-            {/* Chart */}
-            <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={dummyData}>
+        <div className="bg-white rounded-xl shadow-md px-4 py-4 pt-10">
+       
+            {/* Scrollable Chart */}
+            <div className="h-64 overflow-x-auto">
+                <div style={{ width: "100%", height: "100%" }}>
+                    <BarChart width={dummyData.length * 50} height={250} data={dummyData}>
                         <XAxis dataKey="name" />
                         <YAxis />
                         <Tooltip />
                         <Legend />
-                        <Bar dataKey="received" fill="#34d399" name="Received" />
-                        <Bar dataKey="pending" fill="#f87171" name="Pending" />
+                        <Bar dataKey="received" fill="#6b8fb3" name="Received" />
+                        <Bar dataKey="pending" fill="#4b647d" name="Pending" />
                     </BarChart>
-                </ResponsiveContainer>
+                </div>
             </div>
         </div>
     );
