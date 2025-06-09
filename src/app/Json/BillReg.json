@@ -57,8 +57,9 @@
             "type": "dropdown",
             "label": "Payment Status",
             "options": [
-                "Paid",
-                "Pending"
+                "paid",
+                "unpaid",
+                "partial"
             ],
             "required": true
         }

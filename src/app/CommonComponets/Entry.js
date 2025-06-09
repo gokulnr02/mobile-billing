@@ -11,6 +11,7 @@ export default function Entry(props) {
     }, {});
 
     const reducer = (state, action) => {
+
         switch (action.type) {
             case "Add":
                 return { ...state, ...action.payload };
@@ -41,7 +42,6 @@ export default function Entry(props) {
 
         if (response.ok) {
             const data = await response.json();
-            console.log("Response Data:", data);
             dispatch({ type: "AllClear" });
         } else {
             console.error("Error submitting form");
