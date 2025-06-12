@@ -4,7 +4,7 @@ import { connectDB } from '../../../lib/db';
 export default async function handler(req, res) {
   // Normalize method
   const method = req.method.toUpperCase();
-
+console.log('Request Method:', method);
   // CORS Headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
