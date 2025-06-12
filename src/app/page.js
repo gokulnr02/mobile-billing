@@ -7,7 +7,7 @@ import {
   CheckCircle2,
   AlignJustify,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import BarChartPopup from "./components/BarChartPopup";
 
@@ -20,29 +20,21 @@ const dummyData = [
   { name: "Jun", received: 9200, pending: 800 },
 ];
 
-const dummyBills = [
-  { customer: "Gokul", date: "2025-06-01", amount: 10000 },
-  { customer: "Ram", date: "2025-06-02", amount: 15000 },
-  { customer: "Alex", date: "2025-06-03", amount: 20000 },
-  { customer: "Sam", date: "2025-06-04", amount: 18000 },
-  { customer: "John", date: "2025-06-05", amount: 12000 },
-];
 
 export default function Home() {
   const router = useRouter();
-  const [filteredBills, setFilteredBills] = useState(dummyBills);
-  const [filterType, setFilterType] = useState("All");
+  const [filteredBills, setFilteredBills] = useState([]);
+  const [filterType, setFilterType] = useState("Today");
+  const [cardDetails, setCardDetails] = useState([]);
 
-  const handleFilter = (type) => {
-    setFilterType(type);
-
-    // Dummy filtering logic - replace with real date filtering as needed
-    if (type === "Today") {
-      setFilteredBills(dummyBills.slice(0, 1));
-    } else if (type === "Last 7 Days") {
-      setFilteredBills(dummyBills.slice(0, 3));
-    } else {
-      setFilteredBills(dummyBills);
+  const handleFilter = async (json) => {
+    const response = await Apifetch(
+      "/api/BillRegistry/select",
+      { type: "last5transactions", ...json },
+      "POST"
+    );
+    if (response && Array.isArray(response)) {
+      setFilteredBills(response);
     }
   };
 
@@ -55,12 +47,91 @@ export default function Home() {
   };
 
   const showTable = (tableName) => {
-    if (tableName === "See all bills") {
-      router.push("/BillRegistry");
-    } else if (tableName === "See long pending bills") {
-      alert("Showing long pending bills (dummy data)");
+    switch (tableName) {
+      case "See all bills":
+        router.push("/BillRegistry/Table");
+        break;
+      case "See long pending bills":
+        alert("Showing long pending bills (dummy data)");
+        break;
+      case "See completed payments":
+        alert("Showing completed payments (dummy data)");
+        break;
     }
-  }
+  };
+
+  const Apifetch = async (api, json, method) => {
+    try {
+      const response = await fetch(api, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(json),
+      });
+
+      if (!response.ok) throw new Error("Failed to fetch data");
+      return await response.json();
+    } catch (error) {
+      console.error("API fetch error:", error);
+      return [];
+    }
+  };
+
+  const fetchCardDetails = async (json) => {
+    const res = await Apifetch(
+      "/api/BillRegistry/select",
+      { type: "carddetails", ...json },
+      "POST"
+    );
+    if (res?.length > 0) {
+      setCardDetails(res);
+    }
+  };
+
+  const getDateRange = async (type) => {
+    let fromDate, toDate;
+    const now = new Date();
+
+    switch (type) {
+      case "Today":
+        fromDate = toDate = now;
+        break;
+      case "Last 7 Days":
+        fromDate = new Date();
+        fromDate.setDate(now.getDate() - 7);
+        toDate = now;
+        break;
+      case "Last Month":
+        fromDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        toDate = new Date(now.getFullYear(), now.getMonth(), 0);
+        break;
+      case "This Year":
+        fromDate = new Date(now.getFullYear(), 0, 1);
+        toDate = new Date(now.getFullYear(), 11, 31);
+        break;
+      case "Select Year & Month":
+        fromDate = new Date(2025, 0, 1);
+        toDate = new Date(2025, 11, 31);
+        break;
+      default:
+        fromDate = toDate = now;
+    }
+
+    return {
+      fromDate: fromDate.toISOString().split("T")[0],
+      toDate: toDate.toISOString().split("T")[0],
+      DateType: type,
+    };
+  };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const dateRange = await getDateRange(filterType);
+      fetchCardDetails(dateRange);
+      handleFilter(dateRange);
+    };
+
+    fetchData();
+  }, [filterType]);
 
   return (
     <div className="min-h-screen bg-[#e5f2ff] font-sans">
@@ -69,9 +140,7 @@ export default function Home() {
         <AlignJustify size={30} />
         <div className="flex items-center gap-2 font-semibold">
           <p className="text-xl">SK Crane Services</p>
-          <p className="w-10 h-10 rounded-full bg-white flex justify-center items-center text-black">
-            SK
-          </p>
+          <p className="w-10 h-10 rounded-full bg-white flex justify-center items-center text-black">SK</p>
         </div>
       </nav>
 
@@ -89,9 +158,9 @@ export default function Home() {
         </button>
       </div>
 
-      {/* Top Action Buttons */}
+      {/* Filter Buttons */}
       <div className="w-full bg-white shadow overflow-x-auto">
-        <div className="flex min-w-max justify-center md:justify-start">
+        <div className="flex w-full justify-center md:justify-start">
           {[
             "Today",
             "Last 7 Days",
@@ -99,10 +168,10 @@ export default function Home() {
             "This Year",
             "Select Year & Month",
             "Custom Range",
-          ].map((label, index) => (
+          ].map((label) => (
             <button
-              key={index}
-              onClick={() => handleFilter(label)}
+              key={label}
+              onClick={() => setFilterType(label)}
               className={`whitespace-nowrap px-4 py-2 text-sm font-medium shadow transition duration-200 ease-in-out ${filterType === label ? "bg-[#4b647d]" : "bg-[#6b8fb3]"
                 } text-white hover:bg-[#4b647d]`}
             >
@@ -115,31 +184,27 @@ export default function Home() {
       {/* Main Grid */}
       <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Summary Card */}
-        <div className="w-full max-w-md p-6 rounded-2xl bg-gradient-to-br from-[#d0f0e0] via-[#e6f7ff] to-[#ffffff] text-gray-800 shadow">
+        <div className="w-full p-6 rounded-2xl bg-gradient-to-br from-[#d0f0e0] via-[#e6f7ff] to-[#ffffff] text-gray-800 shadow">
           <div className="flex justify-between items-center mb-6">
             <div>
-              <h2 className="text-sm font-medium text-gray-500">
-                Amount Received
-              </h2>
-              <p className="text-2xl font-semibold text-green-700">₹1,20,000</p>
+              <h2 className="text-sm font-medium text-gray-500">Amount Received</h2>
+              <p className="text-2xl font-semibold text-green-700">₹{cardDetails?.[0]?.AmountReceived || 0}</p>
             </div>
             <div className="text-right">
-              <h2 className="text-sm font-medium text-gray-500">
-                Amount Pending
-              </h2>
-              <p className="text-2xl font-semibold text-red-600">₹40,000</p>
+              <h2 className="text-sm font-medium text-gray-500">Amount Pending</h2>
+              <p className="text-2xl font-semibold text-red-600">₹{cardDetails?.[0]?.AmountPending || 0}</p>
             </div>
           </div>
           <div className="border-t border-dashed border-gray-300 pt-4 text-center">
             <h2 className="text-md font-medium text-gray-600">Total</h2>
-            <p className="text-3xl font-bold text-gray-800">₹1,60,000</p>
+            <p className="text-3xl font-bold text-gray-800">₹{cardDetails?.[0]?.TotalAmount || 0}</p>
           </div>
         </div>
 
         {/* Bar Chart */}
         <BarChartPopup data={dummyData} />
 
-        {/* Recent Bills Table */}
+        {/* Recent Bills */}
         <div className="bg-white rounded-xl shadow-md px-4 py-4 w-full md:col-span-2">
           <h2 className="text-xl font-semibold mb-4">Recent Bills</h2>
           <div className="overflow-x-auto">
@@ -158,14 +223,12 @@ export default function Home() {
                     key={idx}
                     className="hover:bg-gray-50 border-t border-gray-100"
                   >
-                    <td className="py-2 text-left">{bill.customer}</td>
-                    <td className="py-2 text-center">{bill.date}</td>
-                    <td className="py-2 text-center">
-                      ₹{bill.amount.toLocaleString()}
-                    </td>
+                    <td className="py-2 text-left px-4">{bill.CustomerName}</td>
+                    <td className="py-2 text-center">{bill.BillDate}</td>
+                    <td className="py-2 text-center">₹{bill.BillAmount}</td>
                     <td className="py-2 text-center">
                       <button
-                        onClick={() => handleViewBill(bill)}
+                        onClick={() => handleViewBill(bill.Attachments)}
                         className="text-blue-600 hover:underline"
                       >
                         View
@@ -185,7 +248,7 @@ export default function Home() {
             className="flex items-center px-4 gap-2 bg-blue-400 hover:bg-blue-700 text-white font-medium py-3 rounded-lg shadow"
           >
             <ListOrdered size={24} />
-            <span className="w-full text-left" >See All Bills</span>
+            <span className="w-full text-left">See All Bills</span>
           </button>
           <button
             onClick={() => showTable("See long pending bills")}
