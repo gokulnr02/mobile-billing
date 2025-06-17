@@ -4,7 +4,7 @@ import { connectDB } from '../../../lib/db';
 export default async function handler(req, res) {
   // Normalize method
   const method = req.method.toUpperCase();
-console.log('Request Method:', method);
+  console.log('Request Method:', method);
   // CORS Headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
@@ -24,7 +24,7 @@ console.log('Request Method:', method);
     }
 
     if (method === 'POST') {
-      const { type, fromDate, toDate } = req.body;
+      const { type, fromDate, toDate, DateType } = req.body;
 
       if (type === 'carddetails') {
         const cardDetails = await BillRegistry.aggregate([
@@ -88,6 +88,102 @@ console.log('Request Method:', method);
           .limit(5);
 
         return res.status(200).json(last5transactions);
+      }
+
+      if (type == 'chartData') {
+        const DateType = req.body.DateType || 'Today';
+        if (DateType === 'Today') {
+          const results = await BillRegistry.aggregate([
+            {
+              $match: {
+                BillDate: {
+                  $gte: new Date(fromDate),
+                  $lte: new Date(toDate)
+                }
+              }
+            },
+            {
+              $group: {
+                _id: "$BillDate",
+                AmountReceived: {
+                  $sum: {
+                    $cond: [
+                      { $eq: ["$PaymentStatus", "paid"] },
+                      "$BillAmount",
+                      0
+                    ]
+                  }
+                },
+                AmountPending: {
+                  $sum: {
+                    $cond: [
+                      { $eq: ["$PaymentStatus", "unpaid"] },
+                      "$BillAmount",
+                      0
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              $project: {
+                _id: 0,
+                name: DateType,
+                AmountReceived: 1,
+                AmountPending: 1
+              }
+            },
+            {
+              $sort: { BillDate: 1 }
+            }
+          ]);
+
+          return res.status(200).json(results);
+        } else if (DateType === 'Last 7 Days') {
+          const results = await BillRegistry.aggregate([
+            {
+              $match: {
+                BillDate: {
+                  $gte: new Date(fromDate),
+                  $lte: new Date(toDate)
+                }
+              },
+              $group: {
+                _id: { "$dayOfWeek": "$BillDate" },
+                AmountReceived: {
+                  $sum: {
+                    $cond: [{
+                      $eq: ["$PaymentStatus", "paid"]
+                    },
+                      "$BillAmount",
+                      0
+                    ]
+                  }
+                },
+                AmountPending: {
+                  $sum: {
+                    $cond: [{
+                      $eq: ["$PaymentStatus", "unpaid"]
+                    },
+                      "$BillAmount",
+                      0
+                    ]
+                  }
+                }
+              },
+              $addFields: {
+                dayName: {
+                  $arrayElemAt: [
+                    ["", "SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"],
+                    "$_id"
+                  ]
+                }
+              }
+            }
+          ])
+           return res.status(200).json(results);
+        }
+       
       }
 
       return res.status(200).json([]);

@@ -11,22 +11,13 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import BarChartPopup from "./components/BarChartPopup";
 
-const dummyData = [
-  { name: "Jan", received: 8000, pending: 2000 },
-  { name: "Feb", received: 9500, pending: 500 },
-  { name: "Mar", received: 7800, pending: 2200 },
-  { name: "Apr", received: 7000, pending: 3000 },
-  { name: "May", received: 8600, pending: 1400 },
-  { name: "Jun", received: 9200, pending: 800 },
-];
-
 
 export default function Home() {
   const router = useRouter();
   const [filteredBills, setFilteredBills] = useState([]);
   const [filterType, setFilterType] = useState("Today");
   const [cardDetails, setCardDetails] = useState([]);
-
+  const [chartData, setChartDate] = useState([]);
   const handleFilter = async (json) => {
     const response = await Apifetch(
       "/api/BillRegistry/select",
@@ -42,8 +33,20 @@ export default function Home() {
     alert(`View bill for ${bill.customer} — ₹${bill.amount}`);
   };
 
+  const handleChartData = async (json) => {
+    const response = await Apifetch(
+      "/api/BillRegistry/select",
+      { type: "chartData", ...json },
+      "POST"
+    );
+    
+    if (response && Array.isArray(response)) {
+      setChartDate(response)
+    }
+  }
+
   const handleNewBill = () => {
-    router.push("/BillRegistry");
+    router.push("/BillRegistry/Entry");
   };
 
   const showTable = (tableName) => {
@@ -128,6 +131,7 @@ export default function Home() {
       const dateRange = await getDateRange(filterType);
       fetchCardDetails(dateRange);
       handleFilter(dateRange);
+      handleChartData(dateRange);
     };
 
     fetchData();
@@ -202,7 +206,7 @@ export default function Home() {
         </div>
 
         {/* Bar Chart */}
-        <BarChartPopup data={dummyData} />
+        <BarChartPopup chartData={chartData} />
 
         {/* Recent Bills */}
         <div className="bg-white rounded-xl shadow-md px-4 py-4 w-full md:col-span-2">

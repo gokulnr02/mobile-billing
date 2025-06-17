@@ -13,7 +13,7 @@ export default function BillRegistry() {
   const SelectApi = "/api/BillRegistry/select";
   return (
     <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Bill Registry</h1>
+      <h1 className="text-2xl font-bold mb-4 text-center">Bill Registry</h1>
       <div>
         <SectionComponent Ejson={Ejson} saveApi={saveApi} />
       </div>
