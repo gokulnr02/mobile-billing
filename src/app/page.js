@@ -103,7 +103,7 @@ export default function Home() {
         fromDate.setDate(now.getDate() - 7);
         toDate = now;
         break;
-      case "Last Month":
+      case "Last 30 Days":
         fromDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
         toDate = new Date(now.getFullYear(), now.getMonth(), 0);
         break;
@@ -168,7 +168,7 @@ export default function Home() {
           {[
             "Today",
             "Last 7 Days",
-            "Last Month",
+            "Last 30 Days",
             "This Year",
             "Select Year & Month",
             "Custom Range",
